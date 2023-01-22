@@ -1,16 +1,15 @@
 {
-  "id": "dev.replugged.PluginTemplate",
-  "name": "Plugin Template",
-  "description": "A plugin template",
+  "id": "ls.xuti.randomstuff",
+  "name": "random stuff",
+  "description": "does random stuff",
   "author": {
-    "name": "replugged",
-    "discordID": "1000992611840049192",
-    "github": "replugged-org"
+    "name": "xwashere",
+    "github": "xwashere"
   },
-  "version": "1.0.3",
+  "version": "1.0.0",
   "updater": {
     "type": "github",
-    "id": "replugged-org/plugin-template"
+    "id":   "xwashere/randomstuff"
   },
   "license": "MIT",
   "type": "replugged-plugin",

@@ -1,24 +1,26 @@
 import { Injector, Logger, webpack } from "replugged";
 
 const inject = new Injector();
-const logger = Logger.plugin("PluginTemplate");
+const logger = Logger.plugin("randomstuff");
 
 export async function start(): Promise<void> {
-  const typingMod = await webpack.waitForModule<{
-    startTyping: (channelId: string) => void;
-  }>(webpack.filters.byProps("startTyping"));
-  const getChannelMod = await webpack.waitForModule<{
-    getChannel: (id: string) => {
-      name: string;
-    };
-  }>(webpack.filters.byProps("getChannel"));
+  logger.log("starting up~");
 
-  if (typingMod && getChannelMod) {
-    inject.instead(typingMod, "startTyping", ([channel]) => {
-      const channelObj = getChannelMod.getChannel(channel);
-      logger.log(`Typing prevented! Channel: #${channelObj?.name ?? "unknown"} (${channel}).`);
-    });
+  // disable tracking
+  let tracking_module      = await webpack.waitForModule(webpack.filters.byProps("handleTrack"));
+  let tracking_module_shit = Object.getOwnPropertyNames(tracking_module);
+  for (let i = 0; i < tracking_module_shit.length; i++) {
+    //@ts-ignore
+    if (tracking_module[tracking_module_shit[i]]["handleTrack"] != undefined) {
+      //@ts-ignore
+      let m = tracking_module[tracking_module_shit[i]];
+
+      m["handleTrack"] = () => {};
+      m["handleConnectionOpen"] = () => {};
+    }
   }
+
+  logger.log("done!");
 }
 
 export function stop(): void {
