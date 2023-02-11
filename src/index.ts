@@ -1,4 +1,4 @@
-import { Injector, Logger, webpack } from "replugged";
+import { injector, Injector, Logger, webpack } from "replugged";
 
 const inject = new Injector();
 const logger = Logger.plugin("randomstuff");
@@ -7,17 +7,17 @@ export async function start(): Promise<void> {
   logger.log("starting up~");
 
   // disable tracking
-  let tracking_module      = await webpack.waitForModule(webpack.filters.byProps("handleTrack"));
-  let tracking_module_shit = Object.getOwnPropertyNames(tracking_module);
-  for (let i = 0; i < tracking_module_shit.length; i++) {
-    //@ts-ignore
-    if (tracking_module[tracking_module_shit[i]]["handleTrack"] != undefined) {
-      //@ts-ignore
-      let m = tracking_module[tracking_module_shit[i]];
+  const tracking_functions      = ["handleTrack", "handleConnectionClosed", "handleConnectionOpen", "handleFingerprint"];
+  let   tracking_module         = await webpack.waitForModule(webpack.filters.byProps("handleTrack"));
+  let   tracking_module_exports = webpack.getExportsForProps(tracking_module, ["handleTrack", "handleConnectionClosed", "handleConnectionOpen", "handleFingerprint"]);
 
-      m["handleTrack"] = () => {};
-      m["handleConnectionOpen"] = () => {};
+  if (tracking_module_exports != null) { 
+    for (let f of tracking_functions) {
+      //@ts-ignore
+      inject.instead(tracking_module_exports, f, () => {});
     }
+  } else {
+    logger.error("!!! unable to find tracking code, analytics still enabled !!!");
   }
 
   logger.log("done!");
