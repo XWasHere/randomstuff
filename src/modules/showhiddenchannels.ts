@@ -1,5 +1,4 @@
 import { util, webpack } from "replugged";
-import { ObjectExports } from "replugged/dist/types";
 import { RSModule } from "../module";
 
 interface GuildChannelStore {
@@ -10,7 +9,10 @@ interface GuildChannelStore {
 };
 
 type GuildChannelRecord = {
+    position: number,
 
+    // not part of discord, shc metadata
+    shown?: boolean
 };
 
 type GuildChannel = {
@@ -21,6 +23,9 @@ type GuildChannel = {
     subtitle:    unknown,
     threadCount: number,
     threadIds:   unknown[]
+
+    // not part of discord, shc metadata
+    shown?: boolean
 };
 
 type GuildCategoryRecord = {
@@ -39,6 +44,7 @@ type GuildCategory = {
 };
 
 type GuildChannels = {
+    allChannelsById:       { [index: string]: GuildChannel },
     rows:                  string[][],
     sections:              number[],
     sortedNamedCategories: GuildCategory[] | null;
@@ -80,21 +86,34 @@ export default class extends RSModule {
         let gcsm = await webpack.waitForModule(webpack.filters.bySource("displayName=\"ChannelListStore\""));
         if (gcsm) {
             let gcs = webpack.getExportsForProps(gcsm, ["__proto__"]) as GuildChannelStore | undefined;
+            //console.log(gcs);
             if (gcs) {               
                 // now we can modify the channel list as much as we want
                 this.injector.after(gcs, "getGuild", ([t, e], res) => {     
                     let gc = res.guildChannels;
 
-                    if (gc.sortedNamedCategories) {
-                        console.log(gc);
+                    if (gc.sortedNamedCategories && gc.rows && gc.sections) {
+                        /*for (let i = 4; i < gc.rows.length; i++) {
+                            let cat = gc.rows[i];
+                            for (let j = 0; j < cat.length; j++) {
+                                if (gc.allChannelsById[cat[j]].record.shown == null && gc.allChannelsById[cat[j]].shown == null)
+                                // checks for null so that it doesnt re assign these since they seem to be reused
+                                gc.allChannelsById[cat[j]].record.shown ??= true;
+                                gc.allChannelsById[cat[j]].shown ??= true;
+                            }
+                        }*/
+
                         for (let i = 0; i < gc.sortedNamedCategories.length; i++) {
                             let c = gc.sortedNamedCategories[i];
 
                             let rows: [number, string][] = [];
-
                             for (let i2 in c.channels) {
                                 let ch = c.channels[i2];
-                                rows.push([ch.position, ch.id]);
+
+                                //ch.record.shown = ch.position > 0;
+                                //ch.shown ??= false;
+                                
+                                rows.push([ch.record.position, ch.id]);
                             }
 
                             rows.sort((a, b) => a[0] - b[0]);
@@ -111,3 +130,9 @@ export default class extends RSModule {
         } else { console.error("could not access guildchannelstore"); }
     }
 }
+
+/*patchPlaintext([
+    {
+
+    }
+])*/
