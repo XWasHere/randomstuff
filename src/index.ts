@@ -1,28 +1,28 @@
-import { injector, Injector, Logger, webpack } from "replugged";
+import { injector, Injector, Logger, webpack, util } from "replugged";
+import { fluxDispatcher } from "replugged/dist/renderer/modules/webpack/common";
 
-const inject = new Injector();
+import m_antitrack          from "./modules/antitrack";
+import m_showhiddenchannels from "./modules/showhiddenchannels";
+
 const logger = Logger.plugin("randomstuff");
+
+let modules = [
+  new m_antitrack(),
+  new m_showhiddenchannels()
+];
 
 export async function start(): Promise<void> {
   logger.log("starting up~");
 
-  // disable tracking
-  const tracking_functions      = ["handleTrack", "handleConnectionClosed", "handleConnectionOpen", "handleFingerprint"];
-  let   tracking_module         = await webpack.waitForModule(webpack.filters.byProps("handleTrack"));
-  let   tracking_module_exports = webpack.getExportsForProps(tracking_module, ["handleTrack", "handleConnectionClosed", "handleConnectionOpen", "handleFingerprint"]);
-
-  if (tracking_module_exports != null) { 
-    for (let f of tracking_functions) {
-      //@ts-ignore
-      inject.instead(tracking_module_exports, f, () => {});
-    }
-  } else {
-    logger.error("!!! unable to find tracking code, analytics still enabled !!!");
+  for (let m of modules) {
+    m.enable();
   }
 
   logger.log("done!");
 }
 
 export function stop(): void {
-  inject.uninjectAll();
+  for (let m of modules) {
+    m.disable();
+  }
 }
